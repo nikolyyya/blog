@@ -1,0 +1,78 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ post.title }} — Блог{% endblock %}
+
+{% block content %}
+    <h2>{{ post.title }}</h2>
+    <p>
+        <small>
+            Создано: {{ post.created_at|date:"d.m.Y H:i" }}
+            Автор: {{ post.author.username|default:"(аноним)" }}<br>
+        </small>
+        {% if post.updated_at and post.updated_at != post.created_at %}
+            <br><small>Обновлено: {{ post.updated_at|date:"d.m.Y H:i" }}</small>
+        {% endif %}
+    </p>
+
+    <p>{{ post.body }}</p>
+
+    <hr>
+    <h3>Комментарии ({{ comments.count }})</h3>
+    {% if comments %}
+        <ul>
+            {% for comment in comments %}
+                <li>
+                    <strong>
+                        {% if comment.author %}
+                            {{ comment.author.username }}
+                        {% else %}
+                            Гость
+                        {% endif %}
+                    </strong>,
+                    <small>{{ comment.created_at|date:"d.m.Y H:i" }}</small><br>
+                    {{ comment.text }}
+                </li>
+            {% endfor %}
+            </ul>
+    {% else %}
+        <p>Пока нет комментариев. Станьте первым!</p>
+    {% endif %}
+
+    <hr>
+    <h3>Оставить комментарий</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+    <button type="submit">Отправить</button>
+    </form>
+
+    <h3>Похожие посты</h3>
+    {% if related_posts %}
+        <ul>
+            {% for related_post in related_posts %}
+                <li>
+                    <h3>
+                        <a href="{% url 'post_detail' pk=related_post.pk %}">{{ related_post.title }}</a>
+                    </h3>
+                    <small>Создано: {{ related_post.created_at|date:"d.m.Y H:i" }}</small>
+                    <p>
+                        {{ related_post.body|truncatechars:150 }}
+                        <a href="{% url 'post_detail' pk=related_post.pk %}">Подробнее…</a>
+                    </p>
+                </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p>Пока нет похожих постов.</p>
+    {% endif %}
+    
+    <p>
+        <a href="{% url 'post_list' %}">← Вернуться к списку постов</a> |
+        
+        {% if user.is_superuser %}
+            <a href="{% url 'post_edit' pk=post.pk %}">Редактировать</a> |
+            <a href="{% url 'post_delete' pk=post.pk%}">Удалить</a>
+        {% endif %}
+        
+    </p>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Создание поста{% endblock %}
+
+{% block content %}
+    <h2>Создайте новый пост</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        <p>
+            {{ form.title.label_tag }}<br>
+            {{ form.title }}
+            {{ form.title.errors }}
+        </p>
+
+        <p>
+            {{ form.body.label_tag }}<br>
+            {{ form.body }}
+            {{ form.body.errors }}
+        </p>
+
+        <p>
+            {{ form.is_published }}
+            {{ form.is_published.label_tag }}
+            <small>← Отметьте это поле, чтобы пост появился в списке.</small>
+            {{ form.is_published.errors }}
+        </p>
+
+        <button type="submit">Сохранить</button>
+    </form>
+
+    <p><a href="{% url 'post_list' %}">← Вернуться к списку постов</a></p>
+{% endblock %}
