@@ -1,6 +1,41 @@
-<nav>
- <a href="{% url 'home' %}">Главная</a> |
- <a href="{% url 'post_list' %}">Блог</a> |
- <a href="{% url 'about' %}">О проекте</a> |
- <a href="#" title="Страницы в разработке">Контакты</a>
+<nav class="navbar navbar-expand-lg bg-dark" data-bs-theme="dark" aria-label="Основная навигация">
+  <div class="container site-container">
+    <a class="navbar-brand fw-semibold" href="{% url 'home' %}">Блог Django</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#site-navigation" aria-controls="site-navigation"
+            aria-expanded="false" aria-label="Меню">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="site-navigation">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="{% url 'post_list' %}">Посты</a></li>
+        <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">О сайте</a></li>
+        {% if user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'post_create' %}">Новый пост</a></li>
+        {% endif %}
+      </ul>
+      <ul class="navbar-nav align-items-lg-center gap-lg-2">
+        {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link d-inline-flex align-items-center gap-2" href="{% url 'profile' %}">
+              {% if user.profile.avatar_url %}
+                <img class="nav-avatar" src="{{ user.profile.avatar_url }}" alt="" width="32" height="32">
+              {% endif %}
+              <span>Профиль</span>
+            </a>
+          </li>
+          <li class="nav-item pb-2 pb-lg-0">
+            <form method="post" action="{% url 'logout' %}" class="m-0">
+              {% csrf_token %}
+              <button class="btn btn-outline-light btn-sm" type="submit">Выйти</button>
+            </form>
+          </li>
+        {% else %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Вход</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'signup' %}">Регистрация</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
 </nav>

@@ -3,19 +3,19 @@
 {% block title %}Удаление поста{% endblock %}
 
 {% block content %}
-    <div class="danger-box">
-        <h2>⚠ Удаление поста</h2>
-        <p class="danger-text">
-            Внимание! Это действие нельзя отменить. Пост будет удалён навсегда.
-        </p>
-    </div>
-
-    <h3>"{{ post.title }}"</h3>
-    <p>{{ post.body|truncatechars:200 }}</p>
-
-    <form method="post" class="delete-form">
+  <section class="card editor-card mx-auto shadow-sm">
+    <div class="card-body p-4 p-md-5">
+      <h1 class="h2 mb-3">Удаление поста</h1>
+      <p>Вы собираетесь удалить пост «{{ post.title }}».</p>
+      <form method="post">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Да, удалить</button>
-        <a href="{% url 'post_detail' pk=post.pk %}" class="btn-cancel">Отмена</a>
-    </form>
+        <button class="btn btn-danger" type="submit">Удалить</button>
+        {% if post.is_published %}
+          <a class="btn btn-outline-secondary" href="{% url 'post_detail' pk=post.pk %}">Отмена</a>
+        {% else %}
+          <a class="btn btn-outline-secondary" href="{% url 'post_list' %}">Отмена</a>
+        {% endif %}
+      </form>
+    </div>
+  </section>
 {% endblock %}

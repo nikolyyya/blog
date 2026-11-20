@@ -1,36 +1,19 @@
 {% extends "blog/base.html" %}
 
-{% block title %}Создание поста{% endblock %}
+{% block title %}Новый пост{% endblock %}
 
 {% block content %}
-    <h2>Создайте новый пост</h2>
-
-    <form method="post">
+  <section class="card editor-card mx-auto shadow-sm">
+    <div class="card-body p-4 p-md-5">
+      <h1 class="h2 mb-4">Новый пост</h1>
+      <form method="post">
         {% csrf_token %}
-
-        {{ form.non_field_errors }}
-
-        <p>
-            {{ form.title.label_tag }}<br>
-            {{ form.title }}
-            {{ form.title.errors }}
-        </p>
-
-        <p>
-            {{ form.body.label_tag }}<br>
-            {{ form.body }}
-            {{ form.body.errors }}
-        </p>
-
-        <p>
-            {{ form.is_published }}
-            {{ form.is_published.label_tag }}
-            <small>← Отметьте это поле, чтобы пост появился в списке.</small>
-            {{ form.is_published.errors }}
-        </p>
-
-        <button type="submit">Сохранить</button>
-    </form>
-
-    <p><a href="{% url 'post_list' %}">← Вернуться к списку постов</a></p>
+        {% include "blog/_form_fields.html" %}
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-primary" type="submit">Опубликовать</button>
+          <a class="btn btn-outline-secondary" href="{% url 'post_list' %}">Отмена</a>
+        </div>
+      </form>
+    </div>
+  </section>
 {% endblock %}

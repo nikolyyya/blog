@@ -1,67 +1,70 @@
-
 {% extends "blog/base.html" %}
 
-{% block title %}Блог по Django{% endblock %}
+{% block title %}Посты — Блог Django{% endblock %}
 
 {% block content %}
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <h1 class="mb-0">Все посты</h1>
+    {% if user.is_authenticated %}
+      <a class="btn btn-primary" href="{% url 'post_create' %}">Создать пост</a>
+    {% endif %}
+  </div>
+  <form method="get" action="{% url 'post_list' %}" class="row g-2 mb-4" role="search">
+    <div class="col-12 col-sm">
+      <label class="visually-hidden" for="id_query">Поиск по постам</label>
+      <input class="form-control" id="id_query" name="q" type="search"
+             placeholder="Поиск по постам" value="{{ query }}">
+    </div>
+    <div class="col-auto"><button class="btn btn-outline-primary" type="submit">Искать</button></div>
+    {% if query %}
+      <div class="col-auto"><a class="btn btn-outline-secondary" href="{% url 'post_list' %}">Сбросить</a></div>
+    {% endif %}
+  </form>
 
-<h2>Блог</h2>
+  {% for post in page_obj.object_list %}
+    {% if forloop.first %}<div class="row row-cols-1 row-cols-md-2 g-3">{% endif %}
+    <div class="col">
+      <article class="card post-card h-100 shadow-sm">
+        <div class="card-body p-4">
+          <h2 class="card-title h4">
+            <a class="link-body-emphasis text-decoration-none" href="{% url 'post_detail' pk=post.pk %}">{{ post.title }}</a>
+          </h2>
+          <p class="small text-body-secondary mb-3">
+            <time datetime="{{ post.created_at|date:'c' }}">{{ post.created_at|date:"d.m.Y H:i" }}</time>
+            {% if post.author %} · {{ post.author.username }}{% endif %}
+          </p>
+          <p class="card-text">{{ post.body|truncatechars:200 }}</p>
+        </div>
+        <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'post_detail' pk=post.pk %}"
+             aria-label="Читать далее: {{ post.title }}">Читать далее</a>
+        </div>
+      </article>
+    </div>
+    {% if forloop.last %}</div>{% endif %}
+  {% empty %}
+    <p class="alert alert-light border">{% if query %}По запросу «{{ query }}» ничего не найдено.{% else %}Постов пока нет.{% endif %}</p>
+  {% endfor %}
 
-<form method="get" action="{% url 'post_list' %}">
-    <input type="text" name="q" placeholder="Поиск по постам..."
-           value="{{ request.GET.q }}">
-    <button type="submit">Искать</button>
-</form>
-
-<p>
-    <a href="{% url 'post_create' %}">Создать новый пост</a>
-</p>
-
-{% if posts %}
-    <ul>
-    {% for post in posts %}
-    <li>
-        <h3>
-            <a href="{% url 'post_detail' pk=post.pk %}">{{ post.title }}</a>
-        </h3>
-        <small>Создано: {{ post.created_at|date:"d.m.Y H:i" }}</small>
-        <p>
-            {{ post.body|truncatechars:150 }}
-            <a href="{% url 'post_detail' pk=post.pk %}">Подробнее…</a>
-        </p>
-    </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>Постов не найдено.</p>
-{% endif %}
-
-{% if page_obj.has_other_pages %}
-    <nav aria-label="Навигация по страницам">
-        <span>
-            {% if page_obj.has_previous %}
-                <a href="?page=1{% if query %}&q={{ query }}{% endif %}">
-                    &laquo; первая
-                </a>
-
-                <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">
-                    предыдущая
-                </a>
-            {% endif %}
-
-            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">
-                    следующая
-                </a>
-
-                <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}">
-                    последняя &raquo;
-                </a>
-            {% endif %}
-        </span>
+  {% if page_obj.has_other_pages %}
+    <nav class="mt-4" aria-label="Навигация по страницам">
+      <ul class="pagination pagination-sm flex-wrap justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="{% querystring page=1 %}">Первая</a></li>
+          <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.previous_page_number %}" aria-label="Предыдущая страница">‹</a></li>
+        {% endif %}
+        {% for number in page_obj.paginator.page_range %}
+          {% if number == page_obj.number %}
+            <li class="page-item active"><span class="page-link" aria-current="page">{{ number }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="{% querystring page=number %}">{{ number }}</a></li>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.next_page_number %}" aria-label="Следующая страница">›</a></li>
+          <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.paginator.num_pages %}">Последняя</a></li>
+        {% endif %}
+      </ul>
     </nav>
-{% endif %}
-
+  {% endif %}
 {% endblock %}

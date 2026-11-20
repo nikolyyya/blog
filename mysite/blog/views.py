@@ -1,43 +1,33 @@
-from django.http import HttpResponseForbidden
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Post
-from .forms import PostForm, CommentForm
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
 from django.core.paginator import Paginator
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .forms import CommentForm, PostForm
+from .models import Post
+
 
 def home(request):
-    context = {}
-    return render(request, "blog/home.html", context)
+    return render(request, "blog/home.html")
 
 
 def about(request):
-    context = {}
-    return render(request, "blog/about.html", context)
+    return render(request, "blog/about.html")
+
 
 def post_list(request):
     query = request.GET.get("q", "").strip()
-    posts_qs = Post.objects.filter(is_published=True)
+    posts = Post.objects.filter(is_published=True).select_related("author").order_by("-created_at", "-pk")
     if query:
-        posts_qs = posts_qs.filter(
-        Q(title__icontains=query) | Q(body__icontains=query)
-        )
+        posts = posts.filter(Q(title__icontains=query) | Q(body__icontains=query))
 
-    paginator = Paginator(posts_qs, 5) 
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-    context = {
-        "posts": page_obj, 
-        "page_obj": page_obj,
-        "query": query,
-    }
-    return render(request, "blog/post_list.html", context)
-
+    page_obj = Paginator(posts, 5).get_page(request.GET.get("page"))
+    return render(request, "blog/post_list.html", {"page_obj": page_obj, "query": query})
 
 
 def post_detail(request, pk):
-    post = get_object_or_404(Post, pk=pk, is_published=True)
-    comments = post.comments.all().order_by("-created_at")
+    post = get_object_or_404(Post.objects.select_related("author"), pk=pk, is_published=True)
     if request.method == "POST":
         if not request.user.is_authenticated:
             return redirect("login")
@@ -50,54 +40,50 @@ def post_detail(request, pk):
             return redirect("post_detail", pk=post.pk)
     else:
         form = CommentForm()
-        context = {
-        "post": post,
-        "comments": comments,
-        "form": form,
-        }
+
+    comments = post.comments.select_related("author").order_by("-created_at", "-pk")
+    context = {"post": post, "comments": comments, "form": form}
     return render(request, "blog/post_detail.html", context)
+
 
 @login_required
 def post_create(request):
-    if request.method == "POST":
-        form = PostForm(request.POST)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.save()
+    form = PostForm(request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.save()
+        messages.success(request, "Пост сохранён.")
+        if post.is_published:
             return redirect("post_detail", pk=post.pk)
-    else:
-        form = PostForm()
-    context = {"form": form}
-    return render(request, "blog/post_form.html", context)
-
-def post_edit(request, pk):
-    user = request.user 
-    if not user.is_authenticated:
-        return HttpResponseForbidden("Редактирование доступно только авторизированным пользователям.")
-    
-    post = get_object_or_404(Post, pk=pk)
-
-    if request.method=="POST":
-        form=PostForm(request.POST, instance=post)
-        if form.is_valid():
-            post = form.save()
-            return redirect("post_detail", pk=pk)
-    else:
-        form = PostForm(instance=post)
-
-    context = {"form": form, "post":post}
-    return render (request, "blog/post_form_edit.html", context)
-
-def post_delete(request, pk):
-    user = request.user 
-    if not user.is_authenticated:
-        return HttpResponseForbidden("Редактирование доступно только авторизированным пользователям.")
-    post = get_object_or_404(Post, pk=pk)
-
-    if request.method=="POST":
-        post.delete()
         return redirect("post_list")
+    return render(request, "blog/post_form.html", {"form": form})
 
-    context = {"post":post}
-    return render(request, "blog/post_confirm_delete.html", context)
+
+def _editable_posts(user):
+    if user.is_superuser:
+        return Post.objects.all()
+    return Post.objects.filter(author=user)
+
+
+@login_required
+def post_edit(request, pk):
+    post = get_object_or_404(_editable_posts(request.user), pk=pk)
+    form = PostForm(request.POST if request.method == "POST" else None, instance=post)
+    if request.method == "POST" and form.is_valid():
+        post = form.save()
+        messages.success(request, "Изменения сохранены.")
+        if post.is_published:
+            return redirect("post_detail", pk=post.pk)
+        return redirect("post_list")
+    return render(request, "blog/post_form_edit.html", {"form": form, "post": post})
+
+
+@login_required
+def post_delete(request, pk):
+    post = get_object_or_404(_editable_posts(request.user), pk=pk)
+    if request.method == "POST":
+        post.delete()
+        messages.success(request, "Пост удалён.")
+        return redirect("post_list")
+    return render(request, "blog/post_confirm_delete.html", {"post": post})
