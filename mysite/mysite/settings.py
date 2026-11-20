@@ -10,7 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+from tempfile import NamedTemporaryFile
+
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,11 +24,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-r!i-+4n#=m*g4peopfmstpz$ot9jnmi4f2%%(fnx=m%p4g57l('
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+
+def _development_secret_key():
+    key_path = BASE_DIR / ".django-secret-key"
+    if not key_path.exists():
+        with NamedTemporaryFile(mode="w", dir=BASE_DIR, encoding="utf-8", delete=False) as key_file:
+            key_file.write(get_random_secret_key())
+        temp_path = Path(key_file.name)
+        try:
+            key_path.hardlink_to(temp_path)
+        except FileExistsError:
+            pass
+        finally:
+            temp_path.unlink()
+    return key_path.read_text(encoding="utf-8").strip()
+
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY and DEBUG:
+    SECRET_KEY = _development_secret_key()
+if not SECRET_KEY:
+    raise ImproperlyConfigured("Set DJANGO_SECRET_KEY before starting Django.")
 
 ALLOWED_HOSTS = []
 
@@ -31,6 +55,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    # Load the project's auth templates before the admin defaults.
+    "accounts.apps.AccountsConfig",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -131,3 +157,4 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+DEFAULT_FROM_EMAIL = "admin@example.com"

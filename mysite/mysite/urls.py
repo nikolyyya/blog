@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from blog.views import post_list, home, about, post_detail, post_create, post_edit, post_delete, signup
+from blog.views import post_list, home, about, post_detail, post_create, post_edit, post_delete
 
 urlpatterns = [
  path("admin/", admin.site.urls),
@@ -13,6 +13,6 @@ urlpatterns = [
  path("blog/<int:pk>/edit/", post_edit, name="post_edit"),
  path("blog/<int:pk>/delete/", post_delete, name="post_delete"),
  path("accounts/", include("django.contrib.auth.urls")),
- path("accounts/signup/", signup, name="signup"),
+ path("accounts/", include("accounts.urls")),
 
 ]

@@ -2,9 +2,9 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Post
 from .forms import PostForm, CommentForm
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.core.paginator import Paginator
 
 def home(request):
     context = {}
@@ -16,9 +16,24 @@ def about(request):
     return render(request, "blog/about.html", context)
 
 def post_list(request):
-    posts = Post.objects.filter(is_published=True).order_by("-created_at")
-    context = {"posts": posts}
+    query = request.GET.get("q", "").strip()
+    posts_qs = Post.objects.filter(is_published=True)
+    if query:
+        posts_qs = posts_qs.filter(
+        Q(title__icontains=query) | Q(body__icontains=query)
+        )
+
+    paginator = Paginator(posts_qs, 5) 
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    context = {
+        "posts": page_obj, 
+        "page_obj": page_obj,
+        "query": query,
+    }
     return render(request, "blog/post_list.html", context)
+
+
 
 def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk, is_published=True)
@@ -86,14 +101,3 @@ def post_delete(request, pk):
 
     context = {"post":post}
     return render(request, "blog/post_confirm_delete.html", context)
-
-def signup(request):
- if request.method == "POST":
-    form = UserCreationForm(request.POST)
-    if form.is_valid():
-        user = form.save()
-        login(request, user)
-        return redirect("post_list")
- else:
-    form = UserCreationForm()
- return render(request, "registration/signup.html", {"form": form})
