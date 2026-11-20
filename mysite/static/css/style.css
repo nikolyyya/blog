@@ -91,3 +91,8 @@ footer {
 .btn-cancel:hover {
     text-decoration: underline;
 }
+
+.profile-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+}
