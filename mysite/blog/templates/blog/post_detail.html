@@ -2,8 +2,10 @@
 
 {% block title %}{{ post.title }} — Блог Django{% endblock %}
 
+{% block extra_head %}<link rel="canonical" href="{{ canonical_url }}">{% endblock %}
+
 {% block content %}
-  <a class="d-inline-block mb-3" href="{% url 'post_list' %}">← Все посты</a>
+  <a class="d-inline-block mb-3" href="{% url 'blog:post_list' %}">← Все посты</a>
   <article class="card shadow-sm mb-4">
     <div class="card-body p-4 p-md-5">
       <h1 class="card-title mb-2">{{ post.title }}</h1>
@@ -14,8 +16,8 @@
       <div class="post-content">{{ post.body|linebreaks }}</div>
       {% if user.is_authenticated and post.author_id == user.id or user.is_superuser %}
         <div class="d-flex gap-2 mt-3">
-          <a class="btn btn-sm btn-outline-secondary" href="{% url 'post_edit' pk=post.pk %}">Редактировать</a>
-          <a class="btn btn-sm btn-outline-danger" href="{% url 'post_delete' pk=post.pk %}">Удалить</a>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ post.get_edit_url }}">Редактировать</a>
+          <a class="btn btn-sm btn-outline-danger" href="{{ post.get_delete_url }}">Удалить</a>
         </div>
       {% endif %}
     </div>

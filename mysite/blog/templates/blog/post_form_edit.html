@@ -11,9 +11,9 @@
         {% include "blog/_form_fields.html" %}
         <button class="btn btn-primary" type="submit">Сохранить</button>
         {% if post.is_published %}
-          <a class="btn btn-outline-secondary" href="{% url 'post_detail' pk=post.pk %}">Отмена</a>
+          <a class="btn btn-outline-secondary" href="{{ post.get_absolute_url }}">Отмена</a>
         {% else %}
-          <a class="btn btn-outline-secondary" href="{% url 'post_list' %}">Отмена</a>
+          <a class="btn btn-outline-secondary" href="{% url 'blog:post_list' %}">Отмена</a>
         {% endif %}
       </form>
     </div>

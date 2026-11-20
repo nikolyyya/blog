@@ -146,8 +146,8 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-LOGIN_REDIRECT_URL = "post_list"
-LOGOUT_REDIRECT_URL = "post_list" 
+LOGIN_REDIRECT_URL = "blog:post_list"
+LOGOUT_REDIRECT_URL = "blog:post_list"
 
 STATICFILES_DIRS = [
     BASE_DIR / "static",
@@ -161,3 +161,6 @@ MAILERS = {
     },
 }
 DEFAULT_FROM_EMAIL = "admin@example.com"
+
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = ["https://localhost:8000", "https://127.0.0.1:8000"]
